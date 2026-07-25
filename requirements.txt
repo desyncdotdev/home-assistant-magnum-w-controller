@@ -1,7 +1,7 @@
 colorlog==6.12.0
-homeassistant==2026.6.4
+homeassistant==2026.7.4
 pip>=26.1.2
 ruff==0.15.21
 
 # Testing
-pytest-homeassistant-custom-component==0.13.340
+pytest-homeassistant-custom-component==0.13.348
