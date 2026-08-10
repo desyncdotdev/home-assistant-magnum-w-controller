@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="banner.jpg" alt="Magnum underfloor heating" />
+</p>
+
 # Magnum W Controller
 
 [![Validate](https://github.com/desync-dev/home-assistant-magnum-w-controller/actions/workflows/validate.yml/badge.svg)](https://github.com/desync-dev/home-assistant-magnum-w-controller/actions/workflows/validate.yml)
