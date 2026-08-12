@@ -53,6 +53,11 @@ jobs:
           git commit -m "chore: release ${VERSION}"
           git push origin HEAD:${{ github.ref_name }}
 
+      - name: Build release zip
+        run: |
+          cd custom_components/magnum_w_controller
+          zip -r "${GITHUB_WORKSPACE}/magnum_w_controller.zip" . -x "__pycache__/*"
+
       - name: Create GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
@@ -61,4 +66,5 @@ jobs:
           gh release create "${VERSION}" \
             --target "$(git rev-parse HEAD)" \
             --title "${VERSION}" \
-            --generate-notes
+            --generate-notes \
+            magnum_w_controller.zip
