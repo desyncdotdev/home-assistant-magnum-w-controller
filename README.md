@@ -1,5 +1,6 @@
 <p align="center">
-  <img src="banner.jpg" alt="Magnum underfloor heating" />
+  <img alt="banner" src="https://github.com/user-attachments/assets/4b538294-7d78-44b5-95bc-615dfb83bed9" />
+
 </p>
 
 # Magnum W Controller
