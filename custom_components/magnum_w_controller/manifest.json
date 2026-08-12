@@ -18,5 +18,5 @@
   "iot_class": "local_polling",
   "issue_tracker": "https://github.com/desyncdotdev/home-assistant-magnum-w-controller/issues",
   "requirements": [],
-  "version": "2026.8.0"
+  "version": "2026.8.1"
 }
