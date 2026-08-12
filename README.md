@@ -1,3 +1,8 @@
+<p align="center">
+  <img alt="banner" src="https://github.com/user-attachments/assets/4b538294-7d78-44b5-95bc-615dfb83bed9" />
+
+</p>
+
 # Magnum W Controller
 
 [![Validate](https://github.com/desync-dev/home-assistant-magnum-w-controller/actions/workflows/validate.yml/badge.svg)](https://github.com/desync-dev/home-assistant-magnum-w-controller/actions/workflows/validate.yml)
