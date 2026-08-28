@@ -23,7 +23,9 @@ If you find this integration useful, you can support my work:
 
 ## Features
 
-- **Automatic DHCP discovery** of the controller (with manual host entry as a
+- **Automatic DHCP discovery** of the controller.
+- **Network scan** when adding it by hand, using the same UDP `whois` probe the
+  official MAGNUM Control Center app uses (with manual host entry as a
   fallback).
 - A **`climate` entity per zone** — current temperature, target temperature,
   heating/cooling action, and per-zone min/max limits.
@@ -51,8 +53,14 @@ The integration is configured entirely from the UI.
 
 - If the controller is on your network, Home Assistant will usually **discover
   it automatically** via DHCP — accept the discovery prompt.
-- Otherwise go to **Settings → Devices & Services → Add Integration**, search
-  for **Magnum W Controller**, and enter its IP address or hostname.
+- Otherwise go to **Settings → Devices & Services → Add Integration** and
+  search for **Magnum W Controller**. Leave the host field **empty** to scan
+  the network for controllers and pick one from the list, or enter an IP
+  address or hostname directly.
+
+Network scanning uses a link-local UDP multicast probe, so it only finds
+controllers on the same network segment as Home Assistant. A controller behind
+a router has to be added by IP address.
 
 ## Development
 

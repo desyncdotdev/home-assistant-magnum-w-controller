@@ -7,6 +7,7 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 from homeassistant.config_entries import SOURCE_DHCP, SOURCE_USER
+from homeassistant.const import CONF_DEVICE
 from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResultType
 from homeassistant.helpers.device_registry import format_mac
@@ -16,8 +17,24 @@ from pytest_homeassistant_custom_component.common import MockConfigEntry
 from custom_components.magnum_w_controller.api import MagnumApiError
 from custom_components.magnum_w_controller.config_flow import MagnumConfigFlow
 from custom_components.magnum_w_controller.const import CONF_HOST, DOMAIN
+from custom_components.magnum_w_controller.discovery import DiscoveredController
 
 _MAC = "aabbccddeeff"
+
+_DISCOVER_DEVICES = (
+    "custom_components.magnum_w_controller.config_flow.async_discover_devices"
+)
+_DISCOVER_DEVICE = (
+    "custom_components.magnum_w_controller.config_flow.async_discover_device"
+)
+
+_CONTROLLER = DiscoveredController(
+    host="1.2.3.4",
+    mac="00:22:a8:01:0c:5c",
+    name="MAGNUM W-Controller",
+    serial_number=None,
+    sw_version="1.1.186",
+)
 
 
 @pytest.fixture
@@ -215,3 +232,117 @@ def test_is_matching() -> None:
 
     assert same_a.is_matching(same_b)
     assert not same_a.is_matching(other)
+
+
+async def test_user_flow_falls_back_to_host_id(
+    hass: HomeAssistant, mock_setup_entry: AsyncMock
+) -> None:
+    """A silent probe leaves the entry keyed on the host."""
+    result = await hass.config_entries.flow.async_init(
+        DOMAIN, context={"source": SOURCE_USER}
+    )
+    with patch(_SYSTEM_NAME, return_value="My Magnum"):
+        result = await hass.config_entries.flow.async_configure(
+            result["flow_id"], {CONF_HOST: "1.2.3.4"}
+        )
+        await hass.async_block_till_done()
+
+    assert result["type"] is FlowResultType.CREATE_ENTRY
+    assert result["result"].unique_id == "1.2.3.4"
+
+
+async def test_user_flow_adopts_discovered_mac(
+    hass: HomeAssistant, mock_setup_entry: AsyncMock
+) -> None:
+    """A typed host that answers the probe is keyed on the reported MAC."""
+    result = await hass.config_entries.flow.async_init(
+        DOMAIN, context={"source": SOURCE_USER}
+    )
+    with (
+        patch(_DISCOVER_DEVICE, return_value=_CONTROLLER),
+        patch(_SYSTEM_NAME, return_value="My Magnum"),
+    ):
+        result = await hass.config_entries.flow.async_configure(
+            result["flow_id"], {CONF_HOST: "1.2.3.4"}
+        )
+        await hass.async_block_till_done()
+
+    assert result["type"] is FlowResultType.CREATE_ENTRY
+    assert result["result"].unique_id == _CONTROLLER.mac
+
+
+async def test_pick_device_flow(
+    hass: HomeAssistant, mock_setup_entry: AsyncMock
+) -> None:
+    """An empty host probes the network and offers what answered."""
+    result = await hass.config_entries.flow.async_init(
+        DOMAIN, context={"source": SOURCE_USER}
+    )
+    with patch(_DISCOVER_DEVICES, return_value=[_CONTROLLER]):
+        result = await hass.config_entries.flow.async_configure(
+            result["flow_id"], {CONF_HOST: ""}
+        )
+    assert result["type"] is FlowResultType.FORM
+    assert result["step_id"] == "pick_device"
+
+    with patch(_SYSTEM_NAME, return_value="My Magnum"):
+        result = await hass.config_entries.flow.async_configure(
+            result["flow_id"], {CONF_DEVICE: _CONTROLLER.mac}
+        )
+        await hass.async_block_till_done()
+
+    assert result["type"] is FlowResultType.CREATE_ENTRY
+    assert result["title"] == "My Magnum"
+    assert result["data"] == {CONF_HOST: _CONTROLLER.host}
+    assert result["result"].unique_id == _CONTROLLER.mac
+
+
+async def test_pick_device_no_devices_found(hass: HomeAssistant) -> None:
+    """An empty host with nothing on the network aborts with a hint."""
+    result = await hass.config_entries.flow.async_init(
+        DOMAIN, context={"source": SOURCE_USER}
+    )
+    result = await hass.config_entries.flow.async_configure(
+        result["flow_id"], {CONF_HOST: ""}
+    )
+    assert result["type"] is FlowResultType.ABORT
+    assert result["reason"] == "no_devices_found"
+
+
+async def test_pick_device_skips_configured_controller(hass: HomeAssistant) -> None:
+    """A controller that already has an entry is not offered again."""
+    MockConfigEntry(
+        domain=DOMAIN,
+        unique_id=_CONTROLLER.mac,
+        data={CONF_HOST: _CONTROLLER.host},
+    ).add_to_hass(hass)
+
+    result = await hass.config_entries.flow.async_init(
+        DOMAIN, context={"source": SOURCE_USER}
+    )
+    with patch(_DISCOVER_DEVICES, return_value=[_CONTROLLER]):
+        result = await hass.config_entries.flow.async_configure(
+            result["flow_id"], {CONF_HOST: ""}
+        )
+
+    assert result["type"] is FlowResultType.ABORT
+    assert result["reason"] == "no_devices_found"
+
+
+async def test_pick_device_cannot_connect(hass: HomeAssistant) -> None:
+    """A controller that answers the probe but not the API aborts."""
+    result = await hass.config_entries.flow.async_init(
+        DOMAIN, context={"source": SOURCE_USER}
+    )
+    with patch(_DISCOVER_DEVICES, return_value=[_CONTROLLER]):
+        result = await hass.config_entries.flow.async_configure(
+            result["flow_id"], {CONF_HOST: ""}
+        )
+
+    with patch(_SYSTEM_NAME, side_effect=MagnumApiError):
+        result = await hass.config_entries.flow.async_configure(
+            result["flow_id"], {CONF_DEVICE: _CONTROLLER.mac}
+        )
+
+    assert result["type"] is FlowResultType.ABORT
+    assert result["reason"] == "cannot_connect"
