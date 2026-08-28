@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import AsyncGenerator
+from collections.abc import AsyncGenerator, Generator
 from unittest.mock import patch
 
 import pytest
@@ -23,6 +23,28 @@ def auto_enable_custom_integrations(
 ) -> None:
     """Enable loading of the custom integration in every test."""
     return
+
+
+@pytest.fixture(autouse=True)
+def mock_discovery() -> Generator[None]:
+    """
+    Keep the whois probe off the network.
+
+    Patched at the use sites, not in ``discovery``: the config flow binds these
+    names at import time. Tests that exercise discovery re-patch the same
+    targets.
+    """
+    with (
+        patch(
+            "custom_components.magnum_w_controller.config_flow.async_discover_devices",
+            return_value=[],
+        ),
+        patch(
+            "custom_components.magnum_w_controller.config_flow.async_discover_device",
+            return_value=None,
+        ),
+    ):
+        yield
 
 
 @pytest.fixture

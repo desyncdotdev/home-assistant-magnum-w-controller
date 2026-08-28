@@ -5,6 +5,9 @@
     "@thijsdejong"
   ],
   "config_flow": true,
+  "dependencies": [
+    "network"
+  ],
   "dhcp": [
     {
       "macaddress": "0022A8*"

@@ -4,9 +4,16 @@
     "step": {
       "user": {
         "title": "Magnum W Controller",
-        "description": "Enter the IP address or hostname of your Magnum W Controller on the local network.",
+        "description": "Enter the IP address or hostname of your Magnum W Controller on the local network. Leave it empty to search the network for controllers.",
         "data": {
           "host": "Host"
+        }
+      },
+      "pick_device": {
+        "title": "Magnum W Controller",
+        "description": "Select the controller you want to set up.",
+        "data": {
+          "device": "Device"
         }
       },
       "discovery_confirm": {
@@ -19,7 +26,9 @@
     },
     "abort": {
       "already_configured": "This controller is already configured.",
-      "already_in_progress": "This controller is already being set up."
+      "already_in_progress": "This controller is already being set up.",
+      "cannot_connect": "Failed to connect to the controller. Check that it is reachable.",
+      "no_devices_found": "No new Magnum W Controllers were found on the network. Controllers on another network segment are not discoverable and must be added by IP address."
     }
   },
   "entity": {

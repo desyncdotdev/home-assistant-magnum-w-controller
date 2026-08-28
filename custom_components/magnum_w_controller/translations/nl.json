@@ -4,9 +4,16 @@
     "step": {
       "user": {
         "title": "Magnum W Controller",
-        "description": "Voer het IP-adres of de hostnaam in van je Magnum W Controller op het lokale netwerk.",
+        "description": "Voer het IP-adres of de hostnaam in van je Magnum W Controller op het lokale netwerk. Laat dit leeg om het netwerk te zoeken naar controllers.",
         "data": {
           "host": "Host"
+        }
+      },
+      "pick_device": {
+        "title": "Magnum W Controller",
+        "description": "Selecteer de controller die je wilt instellen.",
+        "data": {
+          "device": "Apparaat"
         }
       },
       "discovery_confirm": {
@@ -19,7 +26,9 @@
     },
     "abort": {
       "already_configured": "Deze controller is al geconfigureerd.",
-      "already_in_progress": "Deze controller wordt al ingesteld."
+      "already_in_progress": "Deze controller wordt al ingesteld.",
+      "cannot_connect": "Kan geen verbinding maken met de controller. Controleer of deze bereikbaar is.",
+      "no_devices_found": "Er zijn geen nieuwe Magnum W Controllers gevonden op het netwerk. Controllers op een ander netwerksegment zijn niet vindbaar en moeten via een IP-adres worden toegevoegd."
     }
   },
   "entity": {
