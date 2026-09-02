@@ -4,4 +4,4 @@ pip>=26.2.1
 ruff==0.16.5
 
 # Testing
-pytest-homeassistant-custom-component==0.13.357
+pytest-homeassistant-custom-component==0.13.361
