@@ -1,7 +1,7 @@
 colorlog==6.12.0
 homeassistant==2026.9.3
 pip>=26.2.1
-ruff==0.16.8
+ruff==0.16.9
 
 # Testing
 pytest-homeassistant-custom-component==0.13.366
