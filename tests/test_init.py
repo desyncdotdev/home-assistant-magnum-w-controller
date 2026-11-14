@@ -10,24 +10,15 @@ from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers import entity_registry as er
 from pytest_homeassistant.common import MockConfigEntry
 
-from custom_components.magnum_w_controller.api import MagnumApiError, MagnumData
-from custom_components.magnum_w_controller.const import CONF_HOST, DOMAIN
+from custom_components.magnum_w_controller.api import MagnumApiError
+from custom_components.magnum_w_controller.const import DOMAIN
 
 
-async def test_setup_and_unload(hass: HomeAssistant, sample_data: MagnumData) -> None:
+async def test_setup_and_unload(
+    hass: HomeAssistant, init_integration: MockConfigEntry
+) -> None:
     """The entry loads, creates entities for every zone and CU, then unloads."""
-    entry = MockConfigEntry(
-        domain=DOMAIN, data={CONF_HOST: "1.2.3.4"}, unique_id="1.2.3.4"
-    )
-    entry.add_to_hass(hass)
-
-    with patch(
-        "custom_components.magnum_w_controller.api.MagnumClient.async_update",
-        return_value=sample_data,
-    ):
-        assert await hass.config_entries.async_setup(entry.entry_id)
-        await hass.async_block_till_done()
-
+    entry = init_integration
     assert entry.state is ConfigEntryState.LOADED
 
     ent_reg = er.async_get(hass)
@@ -48,13 +39,11 @@ async def test_setup_and_unload(hass: HomeAssistant, sample_data: MagnumData) ->
     assert entry.state is ConfigEntryState.NOT_LOADED
 
 
-async def test_setup_retry_on_connection_error(hass: HomeAssistant) -> None:
+async def test_setup_retry_on_connection_error(
+    hass: HomeAssistant, config_entry: MockConfigEntry
+) -> None:
     """A controller that cannot be reached puts the entry into retry."""
-    entry = MockConfigEntry(
-        domain=DOMAIN, data={CONF_HOST: "1.2.3.4"}, unique_id="1.2.3.4"
-    )
-    entry.add_to_hass(hass)
-
+    entry = config_entry
     with patch(
         "custom_components.magnum_w_controller.api.MagnumClient.async_update",
         side_effect=MagnumApiError("boom"),

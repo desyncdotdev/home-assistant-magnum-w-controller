@@ -30,16 +30,16 @@ identity instead of creating a duplicate.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Self
+from typing import TYPE_CHECKING, Any
 
 import voluptuous as vol
 from homeassistant.config_entries import ConfigFlow, ConfigFlowResult
-from homeassistant.const import CONF_DEVICE
+from homeassistant.const import CONF_DEVICE, CONF_HOST
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.device_registry import format_mac
 
 from .api import MagnumApiError, MagnumClient
-from .const import CONF_HOST, DOMAIN
+from .const import DOMAIN
 from .discovery import async_discover_device, async_discover_devices
 
 if TYPE_CHECKING:
@@ -59,17 +59,7 @@ class MagnumConfigFlow(ConfigFlow, domain=DOMAIN):
     def __init__(self) -> None:
         """Initialize the flow's discovery state."""
         self._host: str | None = None
-        self._system_name: str | None = None
         self._discovered_devices: dict[str, DiscoveredController] = {}
-
-    @property
-    def host(self) -> str | None:
-        """Host of the controller this flow is configuring."""
-        return self._host
-
-    def is_matching(self, other_flow: Self) -> bool:
-        """Return True if another in-progress flow targets the same controller."""
-        return other_flow.host == self._host
 
     async def _async_get_system_name(self, host: str) -> str:
         """Connect to the controller and return its system name."""
@@ -187,13 +177,12 @@ class MagnumConfigFlow(ConfigFlow, domain=DOMAIN):
 
         if user_input is not None:
             try:
-                self._system_name = await self._async_get_system_name(self._host)
+                system_name = await self._async_get_system_name(self._host)
             except MagnumApiError:
                 errors["base"] = "cannot_connect"
             else:
                 return self.async_create_entry(
-                    title=self._system_name or "Magnum W Controller",
-                    data={CONF_HOST: self._host},
+                    title=system_name, data={CONF_HOST: self._host}
                 )
 
         return self.async_show_form(

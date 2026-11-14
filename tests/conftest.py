@@ -6,6 +6,7 @@ from collections.abc import AsyncGenerator, Generator
 from unittest.mock import patch
 
 import pytest
+from homeassistant.const import CONF_HOST
 from homeassistant.core import HomeAssistant
 from pytest_homeassistant.common import MockConfigEntry
 
@@ -14,7 +15,7 @@ from custom_components.magnum_w_controller.api import (
     MagnumData,
     Zone,
 )
-from custom_components.magnum_w_controller.const import CONF_HOST, DOMAIN
+from custom_components.magnum_w_controller.const import DOMAIN
 
 
 @pytest.fixture(autouse=True)
@@ -43,7 +44,6 @@ def mock_discovery() -> Generator[None]:
 def sample_data() -> MagnumData:
     """A representative controller snapshot: one CU, one heating + one cooling zone."""
     return MagnumData(
-        system_name="Test Magnum",
         firmware_version="1.1.186",
         app_version="201109-0850",
         control_units=[
@@ -81,11 +81,8 @@ def sample_data() -> MagnumData:
 
 
 @pytest.fixture
-async def init_integration(
-    hass: HomeAssistant,
-    sample_data: MagnumData,
-) -> AsyncGenerator[MockConfigEntry]:
-    """Set up the integration with a mocked controller and yield the entry."""
+def config_entry(hass: HomeAssistant) -> MockConfigEntry:
+    """A config entry for a controller added by host, not yet set up."""
     entry = MockConfigEntry(
         domain=DOMAIN,
         title="Test Magnum",
@@ -93,11 +90,20 @@ async def init_integration(
         unique_id="1.2.3.4",
     )
     entry.add_to_hass(hass)
+    return entry
 
+
+@pytest.fixture
+async def init_integration(
+    hass: HomeAssistant,
+    config_entry: MockConfigEntry,
+    sample_data: MagnumData,
+) -> AsyncGenerator[MockConfigEntry]:
+    """Set up the integration with a mocked controller and yield the entry."""
     with patch(
         "custom_components.magnum_w_controller.api.MagnumClient.async_update",
         return_value=sample_data,
     ):
-        assert await hass.config_entries.async_setup(entry.entry_id)
+        assert await hass.config_entries.async_setup(config_entry.entry_id)
         await hass.async_block_till_done()
-        yield entry
+        yield config_entry

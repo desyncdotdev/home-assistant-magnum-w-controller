@@ -103,10 +103,26 @@ class FakeSession:
         return {"jsonrpc": "2.0", "id": 1, "result": {"objects": out}}
 
 
-def make_client(state: dict[tuple[int, int], Any] | None = None) -> MagnumClient:
+def make_client(session: FakeSession | None = None) -> MagnumClient:
     """Build a client backed by a fake session."""
-    session = FakeSession(DEVICE_STATE if state is None else state)
-    return MagnumClient("1.2.3.4", session)  # type: ignore[arg-type]
+    return MagnumClient("1.2.3.4", session or FakeSession(DEVICE_STATE))  # type: ignore[arg-type]
+
+
+def make_zone(zone_id: int, mode: int) -> Zone:
+    """Build a zone in the given raw zone mode."""
+    return Zone(
+        zone_id=zone_id,
+        cu_index=0,
+        name=f"Zone {zone_id}",
+        room_temp=20.0,
+        setpoint=21.0,
+        mode=mode,
+        is_active=True,
+        link_quality=3,
+        battery=4,
+        min_temp=5.0,
+        max_temp=35.0,
+    )
 
 
 async def test_async_get_system_name() -> None:
@@ -123,7 +139,7 @@ async def test_async_get_versions() -> None:
 
 async def test_async_get_versions_missing() -> None:
     """Absent version objects yield None rather than raising."""
-    client = make_client(state={(0, 4): 0, (0, 5): "Test Magnum"})
+    client = make_client(FakeSession({(0, 4): 0, (0, 5): "Test Magnum"}))
     assert await client.async_get_versions() == (None, None)
 
 
@@ -132,7 +148,6 @@ async def test_async_update_full_snapshot() -> None:
     client = make_client()
     data = await client.async_update()
 
-    assert data.system_name == "Test Magnum"
     assert data.firmware_version == "1.1.186"
     assert data.app_version == "201109-0850"
     assert data.sw_version == "firmware 1.1.186 / app 201109-0850"
@@ -166,22 +181,9 @@ async def test_async_update_full_snapshot() -> None:
 async def test_set_setpoint_manual_heat_writes_manual_object() -> None:
     """A manual-heat zone writes the manual setpoint object (200 + base)."""
     session = FakeSession(DEVICE_STATE)
-    client = MagnumClient("1.2.3.4", session)  # type: ignore[arg-type]
-    zone = Zone(
-        zone_id=1,
-        cu_index=0,
-        name="Living Room",
-        room_temp=20.0,
-        setpoint=21.0,
-        mode=2,
-        is_active=True,
-        link_quality=3,
-        battery=4,
-        min_temp=5.0,
-        max_temp=35.0,
-    )
+    client = make_client(session)
 
-    await client.async_set_zone_setpoint(zone, 22.5)
+    await client.async_set_zone_setpoint(make_zone(1, mode=2), 22.5)
 
     assert session.last_write is not None
     written = session.last_write["params"]["objects"][0]
@@ -192,23 +194,11 @@ async def test_set_setpoint_manual_heat_writes_manual_object() -> None:
 async def test_set_setpoint_cooling_writes_cooling_object() -> None:
     """A cooling zone writes the cooling setpoint object (203 + base)."""
     session = FakeSession(DEVICE_STATE)
-    client = MagnumClient("1.2.3.4", session)  # type: ignore[arg-type]
-    zone = Zone(
-        zone_id=2,
-        cu_index=0,
-        name="Bedroom",
-        room_temp=24.0,
-        setpoint=22.0,
-        mode=7,
-        is_active=False,
-        link_quality=2,
-        battery=2,
-        min_temp=10.0,
-        max_temp=30.0,
-    )
+    client = make_client(session)
 
-    await client.async_set_zone_setpoint(zone, 19.0)
+    await client.async_set_zone_setpoint(make_zone(2, mode=7), 19.0)
 
+    assert session.last_write is not None
     written = session.last_write["params"]["objects"][0]
     assert written["id"] == "303"  # 203 + 100 * (2 - 1)
     assert written["properties"]["3"]["value"] == 190
@@ -217,19 +207,7 @@ async def test_set_setpoint_cooling_writes_cooling_object() -> None:
 async def test_set_setpoint_schedule_mode_rejected() -> None:
     """Schedule-driven modes have no editable setpoint and raise."""
     client = make_client()
-    zone = Zone(
-        zone_id=1,
-        cu_index=0,
-        name="Living Room",
-        room_temp=20.0,
-        setpoint=21.0,
-        mode=3,  # not manual (2) or cooling (7)
-        is_active=True,
-        link_quality=3,
-        battery=4,
-        min_temp=5.0,
-        max_temp=35.0,
-    )
+    zone = make_zone(1, mode=3)  # not manual (2) or cooling (7)
 
     with pytest.raises(MagnumApiError):
         await client.async_set_zone_setpoint(zone, 20.0)
@@ -242,7 +220,7 @@ async def test_controller_error_response_raises() -> None:
         def post(self, url: str, *, json: dict, **_: Any) -> _FakeResponse:
             return _FakeResponse({"jsonrpc": "2.0", "id": 1, "error": "nope"})
 
-    client = MagnumClient("1.2.3.4", ErrorSession(DEVICE_STATE))  # type: ignore[arg-type]
+    client = make_client(ErrorSession(DEVICE_STATE))
     with pytest.raises(MagnumApiError):
         await client.async_get_system_name()
 
@@ -255,6 +233,6 @@ async def test_connection_error_raises() -> None:
             msg = "boom"
             raise aiohttp.ClientError(msg)
 
-    client = MagnumClient("1.2.3.4", BrokenSession(DEVICE_STATE))  # type: ignore[arg-type]
+    client = make_client(BrokenSession(DEVICE_STATE))
     with pytest.raises(MagnumApiError):
         await client.async_get_system_name()

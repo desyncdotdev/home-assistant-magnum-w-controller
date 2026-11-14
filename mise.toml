@@ -10,7 +10,7 @@ description = "Install development dependencies"
 run = "uv pip install -r requirements-dev.txt"
 
 [tasks.test]
-description = "Run the tests (also validates tariffs.yaml)"
+description = "Run the tests"
 depends = ["install"]
 run = "pytest"
 
