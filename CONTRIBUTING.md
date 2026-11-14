@@ -24,9 +24,9 @@ Pull requests are the best way to propose changes to the codebase.
 [release-please](https://github.com/googleapis/release-please) picks the next
 version and writes the changelog from the commit titles on `main`, so pull
 request titles follow [Conventional Commits](https://www.conventionalcommits.org)
-(`feat: ...`, `fix(climate): ...`, `feat!: ...` for a breaking change), with
-one of the types in `release-please-config.json`. It keeps a release pull
-request open; merging it publishes the release, with the zip HACS downloads.
+(`feat: ...`, `fix(climate): ...`, `feat!: ...` for a breaking change). It
+keeps a release pull request open; merging it publishes the release, with the
+zip HACS downloads.
 
 ## Any contributions you make will be under the MIT Software License
 
