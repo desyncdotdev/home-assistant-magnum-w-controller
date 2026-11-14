@@ -5,20 +5,34 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from homeassistant.const import Platform
+from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
+from homeassistant.loader import async_get_integration
 
 from .api import MagnumClient
-from .const import CONF_HOST
+from .const import CONF_HOST, DOMAIN
 from .coordinator import MagnumCoordinator
 from .entity import control_unit_device_info
+from .version_migration import async_setup_version_migration
 
 if TYPE_CHECKING:
     from homeassistant.core import HomeAssistant
+    from homeassistant.helpers.typing import ConfigType
 
     from .coordinator import MagnumConfigEntry
 
 PLATFORMS: list[Platform] = [Platform.CLIMATE, Platform.SENSOR]
+
+CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
+
+
+async def async_setup(hass: HomeAssistant, _config: ConfigType) -> bool:
+    """Set up the parts of the integration that do not belong to an entry."""
+    integration = await async_get_integration(hass, DOMAIN)
+    version = str(integration.version) if integration.version else None
+    async_setup_version_migration(hass, version)
+    return True
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: MagnumConfigEntry) -> bool:

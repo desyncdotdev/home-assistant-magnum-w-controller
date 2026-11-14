@@ -1,0 +1,50 @@
+name: Conventional Commits
+
+# release-please builds the changelog and the version from the commit titles on main, so each
+# one must follow Conventional Commits (bin/commit-title). A pull request is squashed into one
+# commit titled after the pull request, or after its commit if it has only one: both are
+# checked, and checked again when the title is edited.
+
+on:
+  pull_request:
+    types:
+      - opened
+      - edited
+      - reopened
+      - synchronize
+
+permissions: {}
+
+# A newer push or title edit of the same pull request replaces the run for the one before.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  titles:
+    name: Titles
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Check the pull request title
+        env:
+          TITLE: ${{ github.event.pull_request.title }}
+        run: bin/commit-title "$TITLE"
+
+      - name: Check the commit titles
+        env:
+          FROM: ${{ github.event.pull_request.base.sha }}
+          TO: ${{ github.event.pull_request.head.sha }}
+        run: |
+          mapfile -t titles < <(git log --no-merges --format=%s "$FROM..$TO")
+          if [[ ${#titles[@]} -gt 0 ]]; then
+              bin/commit-title "${titles[@]}"
+          fi
