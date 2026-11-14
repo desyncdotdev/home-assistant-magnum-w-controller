@@ -5,8 +5,7 @@
 
 # Magnum W Controller
 
-[![Validate](https://github.com/desync-dev/home-assistant-magnum-w-controller/actions/workflows/validate.yml/badge.svg)](https://github.com/desync-dev/home-assistant-magnum-w-controller/actions/workflows/validate.yml)
-[![Lint](https://github.com/desync-dev/home-assistant-magnum-w-controller/actions/workflows/lint.yml/badge.svg)](https://github.com/desync-dev/home-assistant-magnum-w-controller/actions/workflows/lint.yml)
+[![CI](https://github.com/desyncdotdev/home-assistant-magnum-w-controller/actions/workflows/ci.yml/badge.svg)](https://github.com/desyncdotdev/home-assistant-magnum-w-controller/actions/workflows/ci.yml)
 
 Home Assistant custom integration for the **Magnum W Controller**, the hub for
 Magnum wireless underfloor-heating thermostats.
@@ -78,10 +77,15 @@ This integration is based on the
 template and ships with a VS Code dev container that runs a standalone Home
 Assistant instance pre-configured with this integration.
 
+[mise](https://mise.jdx.dev) installs Python and uv, and runs the tasks in
+`mise.toml` in a virtualenv in `.venv`:
+
 ```bash
-scripts/setup     # install dependencies
+mise run install  # install the development dependencies
+mise run test     # run the tests
+mise run lint     # lint and check formatting
+mise run format   # fix lint issues and format
 scripts/develop   # start Home Assistant with this integration loaded
-scripts/lint      # format and lint with ruff
 ```
 
 ### Tests
@@ -90,8 +94,7 @@ Tests use
 [`pytest-homeassistant-custom-component`](https://github.com/MatthewFlamm/pytest-homeassistant-custom-component).
 
 ```bash
-pip install -r requirements.txt
-pytest
+mise run test
 ```
 
 ## Contributing

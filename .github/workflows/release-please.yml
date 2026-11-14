@@ -1,37 +1,31 @@
-name: Release
+name: Release Please
 
-# release-please keeps a pull request open with the next version, from the Conventional Commits
-# titles on main since the last release, and its changelog. Merging it tags the release, and the
-# zip HACS downloads (hacs.json) is then added to it.
+# Merging the release PR tags the release; the zip HACS downloads (hacs.json) is then added to
+# it, so downloads are counted per release.
 on:
   push:
-    branches:
-      - main
+    branches: [main]
 
 permissions: {}
 
-# One run at a time, so a release is created and gets its zip before the next push is looked at.
+# One run at a time, so a release gets its zip before the next push is looked at.
 concurrency:
-  group: release-please
+  group: ${{ github.workflow }}
   cancel-in-progress: false
 
 jobs:
   release-please:
-    name: release-please
     runs-on: ubuntu-slim
-    timeout-minutes: 5
+    timeout-minutes: 10
     permissions:
-      contents: write
-      pull-requests: write
+      contents: write # create the release and tag
+      pull-requests: write # open and update the release PR
     outputs:
       release_created: ${{ steps.release.outputs.release_created }}
       tag_name: ${{ steps.release.outputs.tag_name }}
     steps:
       - uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
         id: release
-        with:
-          config-file: release-please-config.json
-          manifest-file: .release-please-manifest.json
 
   zip:
     name: Add the zip to the release
@@ -40,10 +34,9 @@ jobs:
     runs-on: ubuntu-slim
     timeout-minutes: 5
     permissions:
-      contents: write
+      contents: write # upload the release asset
     steps:
-      - name: Checkout the release
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ needs.release-please.outputs.tag_name }}
           persist-credentials: false
