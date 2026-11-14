@@ -1,4 +1,11 @@
 [tool.pytest.ini_options]
+# Deprecations raised inside dependencies, not by this integration. Same
+# filters as home-assistant/core.
+filterwarnings = [
+    "ignore:Inheritance class HomeAssistantApplication from web.Application is discouraged:DeprecationWarning",
+    # backoff is archived: https://github.com/litl/backoff/pull/220
+    "ignore:'asyncio.iscoroutinefunction' is deprecated and slated for removal in Python 3.16:DeprecationWarning:(backoff._decorator|backoff._async)",
+]
 testpaths = ["tests"]
 asyncio_mode = "auto"
 addopts = "--cov=custom_components.magnum_w_controller --cov-report=term-missing"
