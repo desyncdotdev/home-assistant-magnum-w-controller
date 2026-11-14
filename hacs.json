@@ -1,6 +1,6 @@
 {
     "name": "Magnum W Controller",
-    "homeassistant": "2025.1",
+    "homeassistant": "2026.3.0",
     "hacs": "2.0.0",
     "zip_release": true,
     "filename": "magnum_w_controller.zip"
