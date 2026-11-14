@@ -59,22 +59,13 @@ def test_parse_live_reply():
     """A real controller reply is parsed into a DiscoveredController."""
     controller = parse_reply(_LIVE_REPLY)
     assert controller == DiscoveredController(
-        host="192.168.20.47",
-        mac="00:22:a8:01:0c:5c",
-        name="MAGNUM W-Controller",
-        serial_number=None,  # a bare "0" carries no information
-        sw_version="1.1.186",
+        host="192.168.20.47", mac="00:22:a8:01:0c:5c", name="MAGNUM W-Controller"
     )
 
 
 def test_parse_reply_tolerates_nul_padding():
     """Replies arrive NUL-padded to the sender's buffer size."""
     assert parse_reply(_LIVE_REPLY + b"\x00" * 4000) == parse_reply(_LIVE_REPLY)
-
-
-def test_parse_reply_keeps_real_serial():
-    """A programmed serial number is kept."""
-    assert parse_reply(_reply(serialnumber="12345")).serial_number == "12345"
 
 
 def test_parse_reply_tolerates_missing_optional_fields():
@@ -90,9 +81,9 @@ def test_parse_reply_tolerates_missing_optional_fields():
             }
         ).encode()
     )
-    assert controller.name == "Magnum W Controller"
-    assert controller.serial_number is None
-    assert controller.sw_version is None
+    assert controller == DiscoveredController(
+        host="1.2.3.4", mac="00:22:a8:00:00:01", name="Magnum W Controller"
+    )
 
 
 def test_parse_reply_ignores_own_probe():

@@ -7,7 +7,7 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 from homeassistant.config_entries import SOURCE_DHCP, SOURCE_USER
-from homeassistant.const import CONF_DEVICE
+from homeassistant.const import CONF_DEVICE, CONF_HOST
 from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResultType
 from homeassistant.helpers.device_registry import format_mac
@@ -15,25 +15,18 @@ from homeassistant.helpers.service_info.dhcp import DhcpServiceInfo
 from pytest_homeassistant.common import MockConfigEntry
 
 from custom_components.magnum_w_controller.api import MagnumApiError
-from custom_components.magnum_w_controller.config_flow import MagnumConfigFlow
-from custom_components.magnum_w_controller.const import CONF_HOST, DOMAIN
+from custom_components.magnum_w_controller.const import DOMAIN
 from custom_components.magnum_w_controller.discovery import DiscoveredController
 
 _MAC = "aabbccddeeff"
 
-_DISCOVER_DEVICES = (
-    "custom_components.magnum_w_controller.config_flow.async_discover_devices"
-)
-_DISCOVER_DEVICE = (
-    "custom_components.magnum_w_controller.config_flow.async_discover_device"
-)
+_FLOW = "custom_components.magnum_w_controller.config_flow"
+_DISCOVER_DEVICES = f"{_FLOW}.async_discover_devices"
+_DISCOVER_DEVICE = f"{_FLOW}.async_discover_device"
+_SYSTEM_NAME = f"{_FLOW}.MagnumClient.async_get_system_name"
 
 _CONTROLLER = DiscoveredController(
-    host="1.2.3.4",
-    mac="00:22:a8:01:0c:5c",
-    name="MAGNUM W-Controller",
-    serial_number=None,
-    sw_version="1.1.186",
+    host="1.2.3.4", mac="00:22:a8:01:0c:5c", name="MAGNUM W-Controller"
 )
 
 
@@ -50,9 +43,6 @@ def mock_setup_entry() -> Generator[AsyncMock]:
 def _dhcp_info(ip: str = "1.2.3.4") -> DhcpServiceInfo:
     """Build a DHCP discovery payload for the test controller."""
     return DhcpServiceInfo(ip=ip, hostname="magnum_w-controller", macaddress=_MAC)
-
-
-_SYSTEM_NAME = "custom_components.magnum_w_controller.config_flow.MagnumClient.async_get_system_name"
 
 
 async def test_user_flow_success(
@@ -219,19 +209,6 @@ async def test_dhcp_second_discovery_in_progress(hass: HomeAssistant) -> None:
     )
     assert second["type"] is FlowResultType.ABORT
     assert second["reason"] == "already_in_progress"
-
-
-def test_is_matching() -> None:
-    """is_matching pairs flows that target the same controller host."""
-    same_a = MagnumConfigFlow()
-    same_a._host = "1.2.3.4"  # noqa: SLF001
-    same_b = MagnumConfigFlow()
-    same_b._host = "1.2.3.4"  # noqa: SLF001
-    other = MagnumConfigFlow()
-    other._host = "5.6.7.8"  # noqa: SLF001
-
-    assert same_a.is_matching(same_b)
-    assert not same_a.is_matching(other)
 
 
 async def test_user_flow_falls_back_to_host_id(

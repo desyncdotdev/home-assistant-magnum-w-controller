@@ -6,7 +6,8 @@ from typing import Final
 
 DOMAIN: Final = "magnum_w_controller"
 
-CONF_HOST: Final = "host"
+# Shown when the controller does not report a name of its own.
+DEFAULT_NAME: Final = "Magnum W Controller"
 
 # The controller is polled over the LAN; 60s keeps it responsive without
 # hammering the (modest) embedded web server.

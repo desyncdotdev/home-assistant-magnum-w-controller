@@ -16,7 +16,7 @@ Pull requests are the best way to propose changes to the codebase.
 1. Fork the repo and create your branch from `main`.
 2. If you've changed something, update the documentation.
 3. Make sure your code lints (using `mise run lint`).
-4. Test you contribution.
+4. Test your contribution (using `mise run test`).
 5. Issue that pull request!
 
 ## Releases
@@ -53,7 +53,7 @@ People *love* thorough bug reports. I'm not even kidding.
 
 ## Use a Consistent Coding Style
 
-Use [black](https://github.com/ambv/black) to make sure the code follows the style.
+Run `mise run format` to make sure the code follows the style ([ruff](https://docs.astral.sh/ruff/) lints and formats it).
 
 ## Test your code modification
 

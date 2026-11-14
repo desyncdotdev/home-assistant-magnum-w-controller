@@ -4,8 +4,7 @@ Async client for the Magnum W Controller's undocumented JSON-RPC API.
 The controller (an AngularJS app served at ``http://<host>``) talks to a
 JSON-RPC endpoint at ``POST /api``. Everything is addressed by an integer
 object id + a property id. This module was reverse-engineered from the
-controller's own JavaScript; see the standalone ``magnum.py`` script in the
-repository root for the heavily commented reference implementation.
+controller's own JavaScript.
 
 Addressing summary
 ------------------
@@ -34,12 +33,13 @@ Addressing summary
 
 from __future__ import annotations
 
-import logging
 from dataclasses import dataclass
 
 import aiohttp
 
-_LOGGER = logging.getLogger(__name__)
+from .const import DEFAULT_NAME
+
+REQUEST_TIMEOUT = aiohttp.ClientTimeout(total=10)
 
 MAX_ZONES_PER_CU = 8
 COOLING_ZONE_MODE = 7
@@ -138,7 +138,6 @@ class Zone:
 class MagnumData:
     """Snapshot of the whole controller returned by a single refresh."""
 
-    system_name: str
     firmware_version: str | None
     app_version: str | None
     control_units: list[ControlUnit]
@@ -158,20 +157,11 @@ class MagnumData:
 class MagnumClient:
     """Minimal async JSON-RPC client for the Magnum W Controller."""
 
-    def __init__(
-        self, host: str, session: aiohttp.ClientSession, timeout: float = 10.0
-    ) -> None:
+    def __init__(self, host: str, session: aiohttp.ClientSession) -> None:
         """Initialize the client for a controller at ``host``."""
-        self._host = host
         self._url = f"http://{host}/api"
         self._session = session
-        self._timeout = aiohttp.ClientTimeout(total=timeout)
         self._req_id = 0
-
-    @property
-    def host(self) -> str:
-        """Host (IP or name) of the controller."""
-        return self._host
 
     async def _call(self, method: str, objects: list[dict]) -> object:
         self._req_id += 1
@@ -183,7 +173,7 @@ class MagnumClient:
         }
         try:
             async with self._session.post(
-                self._url, json=payload, timeout=self._timeout
+                self._url, json=payload, timeout=REQUEST_TIMEOUT
             ) as resp:
                 resp.raise_for_status()
                 data = await resp.json(content_type=None)
@@ -226,7 +216,7 @@ class MagnumClient:
     async def async_get_system_name(self) -> str:
         """Read the controller's configured system name."""
         values = await self._read_values([(0, 5)])
-        return str(values.get((0, 5), "Magnum W Controller"))
+        return str(values.get((0, 5)) or DEFAULT_NAME)
 
     async def async_get_versions(self) -> tuple[str | None, str | None]:
         """Read the controller's firmware and application version strings."""
@@ -242,12 +232,8 @@ class MagnumClient:
         values = await self._read_values([(0, 4)])
         return int(values.get((0, 4), 0))
 
-    async def async_get_control_units(
-        self, num_cu: int | None = None
-    ) -> list[ControlUnit]:
+    async def async_get_control_units(self, num_cu: int) -> list[ControlUnit]:
         """Read all control units and their link quality."""
-        if num_cu is None:
-            num_cu = await self._async_number_of_cus()
         requests: list[tuple[int, int]] = []
         for s in range(num_cu):
             requests.append((1 + s, 5))  # name
@@ -277,10 +263,8 @@ class MagnumClient:
             if int(masks.get((100 + s, 4), 0)) & (1 << bit)
         ]
 
-    async def async_get_zones(self, num_cu: int | None = None) -> list[Zone]:
+    async def async_get_zones(self, num_cu: int) -> list[Zone]:
         """Read every active zone and its current state."""
-        if num_cu is None:
-            num_cu = await self._async_number_of_cus()
         active = await self._async_active_zone_ids(num_cu)
 
         requests: list[tuple[int, int]] = []
@@ -328,16 +312,12 @@ class MagnumClient:
     async def async_update(self) -> MagnumData:
         """Fetch a full snapshot of the controller."""
         num_cu = await self._async_number_of_cus()
-        system_name = await self.async_get_system_name()
         firmware_version, app_version = await self.async_get_versions()
-        control_units = await self.async_get_control_units(num_cu)
-        zones = await self.async_get_zones(num_cu)
         return MagnumData(
-            system_name=system_name,
             firmware_version=firmware_version,
             app_version=app_version,
-            control_units=control_units,
-            zones=zones,
+            control_units=await self.async_get_control_units(num_cu),
+            zones=await self.async_get_zones(num_cu),
         )
 
     async def async_set_zone_setpoint(self, zone: Zone, temp_c: float) -> None:

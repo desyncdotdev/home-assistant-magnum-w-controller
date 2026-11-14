@@ -43,6 +43,8 @@ from typing import TYPE_CHECKING, Any
 from homeassistant.components import network
 from homeassistant.helpers.device_registry import format_mac
 
+from .const import DEFAULT_NAME
+
 if TYPE_CHECKING:
     from homeassistant.core import HomeAssistant
 
@@ -51,15 +53,11 @@ _LOGGER = logging.getLogger(__name__)
 DISCOVERY_GROUP = "224.0.0.1"
 DISCOVERY_PORT = 1324
 SUPPLIER_MATCH = "magnum"
-DEFAULT_NAME = "Magnum W Controller"
 
 DEFAULT_DISCOVERY_TIMEOUT = 5.0
 
 # UDP is lossy, so the probe is repeated once inside the listen window.
 _RETRY_DELAY = 1.0
-
-# What a controller with no serial number programmed reports.
-_EMPTY_SERIAL = "0"
 
 _ANY_ADDRESS = "0.0.0.0"  # noqa: S104
 
@@ -71,11 +69,9 @@ class DiscoveredController:
     host: str
     mac: str
     name: str
-    serial_number: str | None
-    sw_version: str | None
 
 
-def build_probe(request_id: int = 1) -> bytes:
+def build_probe(request_id: int) -> bytes:
     """Return the ``whois`` request datagram."""
     return json.dumps(
         {"jsonrpc": "2.0", "id": request_id, "method": "whois", "params": ""}
@@ -121,33 +117,31 @@ def parse_reply(raw: bytes) -> DiscoveredController | None:
     if SUPPLIER_MATCH not in supplier.casefold() or not host or not mac:
         return None
 
-    serial = _clean(result.get("serialnumber"))
     return DiscoveredController(
         host=host,
         mac=format_mac(mac),
         name=_clean(result.get("devicename")) or DEFAULT_NAME,
-        serial_number=None if serial == _EMPTY_SERIAL else serial,
-        sw_version=_clean(result.get("swversion")),
     )
 
 
 class _WhoisProtocol(asyncio.DatagramProtocol):
-    """Collects raw replies to a ``whois`` probe."""
+    """Collects the controllers that answer a ``whois`` probe, keyed by MAC."""
 
-    def __init__(self, stop_host: str | None = None) -> None:
-        """Initialise an empty reply buffer, watching for ``stop_host``."""
-        self.replies: list[bytes] = []
+    def __init__(self, stop_host: str | None) -> None:
+        """Start with no controllers, watching for ``stop_host``."""
+        self.controllers: dict[str, DiscoveredController] = {}
         self.done = asyncio.Event()
         self._stop_host = stop_host
 
     def datagram_received(self, data: bytes, addr: tuple[str | Any, int]) -> None:
-        """Buffer an incoming datagram."""
+        """Record the controller an incoming datagram describes, if any."""
         _LOGGER.debug("whois reply from %s: %s", addr[0], data[:256])
-        self.replies.append(data)
-        if self._stop_host is not None:
-            controller = parse_reply(data)
-            if controller is not None and controller.host == self._stop_host:
-                self.done.set()
+        controller = parse_reply(data)
+        if controller is None:
+            return
+        self.controllers.setdefault(controller.mac, controller)
+        if controller.host == self._stop_host:
+            self.done.set()
 
     def error_received(self, exc: Exception) -> None:
         """Log a transport error without aborting discovery."""
@@ -271,18 +265,12 @@ async def async_discover_devices(
     finally:
         transport.close()
 
-    found: dict[str, DiscoveredController] = {}
-    for raw in protocol.replies:
-        controller = parse_reply(raw)
-        if controller is not None:
-            found.setdefault(controller.mac, controller)
-
-    _LOGGER.debug("Discovered %d controller(s)", len(found))
-    return list(found.values())
+    _LOGGER.debug("Discovered %d controller(s)", len(protocol.controllers))
+    return list(protocol.controllers.values())
 
 
 async def async_discover_device(
-    hass: HomeAssistant, host: str, scan_timeout: float = DEFAULT_DISCOVERY_TIMEOUT
+    hass: HomeAssistant, host: str
 ) -> DiscoveredController | None:
     """
     Return the discovered controller at ``host``, if it answers.
@@ -292,7 +280,7 @@ async def async_discover_device(
     timeout. Returns None when the controller is on another segment, or when
     ``host`` is a name rather than the address the controller reports.
     """
-    for controller in await async_discover_devices(hass, scan_timeout, stop_host=host):
+    for controller in await async_discover_devices(hass, stop_host=host):
         if controller.host == host:
             return controller
     return None
