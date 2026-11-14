@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.0](https://github.com/desyncdotdev/home-assistant-magnum-w-controller/compare/2026.12.0...1.0.0) (2026-11-14)
+
+
+### Bug Fixes
+
+* require Home Assistant 2026.3, the first version that loads the bundled brand images ([#140](https://github.com/desyncdotdev/home-assistant-magnum-w-controller/issues/140)) ([7209440](https://github.com/desyncdotdev/home-assistant-magnum-w-controller/commit/72094406f33115f12f6ceb33aa24128a60da9a76))
+
 ## [2026.12.0](https://github.com/desyncdotdev/home-assistant-magnum-w-controller/compare/2026.8.2...2026.12.0) (2026-11-14)
 
 
