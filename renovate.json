@@ -5,6 +5,11 @@
     {
       "matchManagers": ["github-actions"],
       "semanticCommitType": "ci"
+    },
+    {
+      "description": "Python follows Home Assistant. Bump it by hand when a pytest-homeassistant update needs a newer version.",
+      "matchPackageNames": ["python"],
+      "enabled": false
     }
   ]
 }
