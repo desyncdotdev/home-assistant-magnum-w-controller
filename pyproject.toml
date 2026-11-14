@@ -1,7 +1,10 @@
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 asyncio_mode = "auto"
-addopts = "--cov=custom_components.magnum_w_controller --cov-report=term-missing"
+asyncio_default_fixture_loop_scope = "function"
+# Let Home Assistant install its httpx alias before respx is imported.
+addopts = "-p no:respx"
+pythonpath = ["."]
 
 [tool.ruff]
 # Based on https://github.com/home-assistant/core/blob/dev/pyproject.toml

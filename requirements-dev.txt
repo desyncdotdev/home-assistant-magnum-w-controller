@@ -3,4 +3,4 @@ ruff==0.17.5
 
 # Testing. This also installs the Home Assistant version it is built for, so
 # do not pin homeassistant separately: the two would have to match exactly.
-pytest-homeassistant-custom-component==0.13.375
+pytest-homeassistant==2026.11.1

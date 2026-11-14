@@ -91,7 +91,8 @@ scripts/develop   # start Home Assistant with this integration loaded
 ### Tests
 
 Tests use
-[`pytest-homeassistant-custom-component`](https://github.com/MatthewFlamm/pytest-homeassistant-custom-component).
+[`pytest-homeassistant`](https://pypi.org/project/pytest-homeassistant/), the
+test package published by Home Assistant.
 
 ```bash
 mise run test
