@@ -19,6 +19,15 @@ Pull requests are the best way to propose changes to the codebase.
 4. Test you contribution.
 5. Issue that pull request!
 
+## Releases
+
+[release-please](https://github.com/googleapis/release-please) picks the next
+version and writes the changelog from the commit titles on `main`, so pull
+request titles follow [Conventional Commits](https://www.conventionalcommits.org)
+(`feat: ...`, `fix(climate): ...`, `feat!: ...` for a breaking change);
+`bin/commit-title` checks them. It keeps a release pull request open; merging it
+publishes the release, with the zip HACS downloads.
+
 ## Any contributions you make will be under the MIT Software License
 
 In short, when you submit code changes, your submissions are understood to be under the same [MIT License](http://choosealicense.com/licenses/mit/) that covers the project. Feel free to contact the maintainers if that's a concern.

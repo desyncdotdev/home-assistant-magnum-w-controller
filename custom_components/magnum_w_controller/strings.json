@@ -37,5 +37,21 @@
         "name": "Signal"
       }
     }
+  },
+  "issues": {
+    "semantic_versioning": {
+      "title": "Magnum W Controller has new version numbers",
+      "fix_flow": {
+        "step": {
+          "confirm": {
+            "title": "Install Magnum W Controller {version}",
+            "description": "Magnum W Controller now numbers its releases 1.0.0, 1.1.0 and so on, instead of after their date. HACS takes {version} for an older version than the one installed, so it does not offer it as an update.\n\nSubmit to download {version} with HACS, then restart Home Assistant. From then on HACS offers new releases as usual."
+          }
+        },
+        "abort": {
+          "install_failed": "HACS could not download {version}. In HACS, open Magnum W Controller, choose Redownload and select {version}, then restart Home Assistant."
+        }
+      }
+    }
   }
 }

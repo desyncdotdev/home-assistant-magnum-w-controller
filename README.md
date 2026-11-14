@@ -42,6 +42,15 @@ If you find this integration useful, you can support my work:
 2. Search for **Magnum W Controller** and install it.
 3. Restart Home Assistant.
 
+### Version numbers
+
+Releases up to 2026.12.0 were numbered after their date; from 1.0.0 on they
+follow [semantic versioning](https://semver.org). HACS takes 1.0.0 for an older
+version than 2026.12.0, so 2026.12.0 shows a Repairs issue (**Settings →
+Repairs**) that downloads 1.0.0 with HACS. On an older release, open
+**Magnum W Controller** in HACS, choose **Redownload** and select the latest
+version. After that, HACS offers new releases as usual.
+
 ### Manual
 
 1. Copy `custom_components/magnum_w_controller` into your Home Assistant `config/custom_components` directory.
