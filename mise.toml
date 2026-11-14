@@ -1,2 +1,25 @@
 [tools]
 python = "3.14"
+uv = "0.11.2"
+
+[env]
+_.python.venv = { path = ".venv", create = true }
+
+[tasks.install]
+description = "Install development dependencies"
+run = "uv pip install -r requirements-dev.txt"
+
+[tasks.test]
+description = "Run the tests (also validates tariffs.yaml)"
+depends = ["install"]
+run = "pytest"
+
+[tasks.lint]
+description = "Lint and check formatting"
+depends = ["install"]
+run = ["ruff check .", "ruff format --check ."]
+
+[tasks.format]
+description = "Fix lint issues and format"
+depends = ["install"]
+run = ["ruff check --fix .", "ruff format ."]
