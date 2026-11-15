@@ -1,6 +1,9 @@
 {
   "domain": "magnum_w_controller",
   "name": "Magnum W Controller",
+  "categories": [
+    "climate.thermostats_heating"
+  ],
   "codeowners": [
     "@thijsdejong"
   ],
