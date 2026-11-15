@@ -6,6 +6,11 @@
       "description": "Python follows Home Assistant. Bump it by hand when a pytest-homeassistant update needs a newer version.",
       "matchPackageNames": ["python"],
       "enabled": false
+    },
+    {
+      "description": "pytest-homeassistant follows each Home Assistant release, so it updates without the shared preset's 7-day wait",
+      "matchPackageNames": ["pytest-homeassistant"],
+      "minimumReleaseAge": "0 days"
     }
   ]
 }
