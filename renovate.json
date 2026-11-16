@@ -1,6 +1,6 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["local>desyncdotdev/admin"],
+  "extends": ["local>desyncdotdev/shared"],
   "packageRules": [
     {
       "description": "Python follows Home Assistant. Bump it by hand when a pytest-homeassistant update needs a newer version.",
